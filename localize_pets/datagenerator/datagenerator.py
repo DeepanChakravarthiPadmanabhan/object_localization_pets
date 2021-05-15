@@ -25,6 +25,7 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
         self.shuffle = shuffle
         self.n = 0
         self.list_IDs = np.arange((len(self.dataset)))
+        print('Total examples in the dataset: ', len(self.list_IDs))
         self.on_epoch_end()
 
     def __len__(self):
