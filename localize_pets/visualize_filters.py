@@ -9,8 +9,6 @@ def compute_loss(img, filter_index):
     # We avoid border artifacts by only involving non-border pixels in the loss.
     activation = feature_extractor(img)
     filter_activation = activation[:, 2:-2, 2:-2, filter_index]
-    # print('filter: ', activation.shape)
-    # filter_activation = activation[:, :, :, filter_index]
     return tf.reduce_mean(filter_activation)
 
 
@@ -40,11 +38,9 @@ def deprocess_image(image):
     return image
 
 
-def visualize_filters(filter_index=0):
-    img = initialize_image(300, 300)
-    iterations = 50
-    learning_rate = 10
-    for iteration in range(iterations):
+def visualize_filters(filter_index, learning_rate, num_iterations, image_width, image_height):
+    img = initialize_image(image_height, image_width)
+    for iteration in range(num_iterations):
         loss, img = gradient_ascent_step(img, filter_index, learning_rate)
     img = deprocess_image(img[0].numpy())
     return loss, img
@@ -57,15 +53,31 @@ parser.add_argument('-l', '--layer_name', default='max_pooling2d_4', type=str,
                     help='Layer to visualize')
 parser.add_argument('-f', '--filter_index', default=1, type=int,
                     help='Filter index of the layer to visualize')
+parser.add_argument('-lr', '--learning_rate', default=1e-3, type=float,
+                    help='Learning rate to regenerate input image')
+parser.add_argument('-it', '--num_iterations', default=30, type=int,
+                    help='Number of iterations to regenerate input image')
+parser.add_argument('-iw', '--image_width', default=300, type=int,
+                    help='Input image width')
+parser.add_argument('-ih', '--image_height', default=300, type=int,
+                    help='Input image height')
 args = parser.parse_args()
 config = vars(args)
 model_path = config['model_path']
 layer_name = config['layer_name']
 filter_idx = config['filter_index']
+learning_rate = config['learning_rate']
+num_iterations = config['num_iterations']
+image_width = config['image_width']
+image_height = config['image_height']
 assert os.path.exists(model_path), "Model path does not exist."
 model = tf.keras.models.load_model(model_path, custom_objects={'IOU': IOU(name='iou')})
 layer = model.get_layer(name=layer_name)
 feature_extractor = tf.keras.models.Model(inputs=model.inputs, outputs=layer.output)
-loss, img = visualize_filters(filter_idx)
+loss, img = visualize_filters(filter_idx,
+                              learning_rate,
+                              num_iterations,
+                              image_width,
+                              image_height)
 plt.imshow(img)
 plt.savefig('visualize_filter_'+ layer_name + '.jpg')

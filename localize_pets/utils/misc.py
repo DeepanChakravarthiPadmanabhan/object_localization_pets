@@ -43,7 +43,7 @@ def plot_bounding_box(image, gt_cords, pred_cords, norm=False):
 
 
 def lr_schedule(epoch, lr):
-    if (epoch + 1) % 20 == 0:
+    if (epoch + 1) % 8 == 0:
         lr *= 0.2
     return max(lr, 3e-07)
 

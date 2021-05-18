@@ -12,17 +12,18 @@ description = 'Training script for object localization task on pets dataset'
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('-dd', '--data_dir', default='/home/deepan/Downloads/', type=str,
                     help='Data directory for training')
-parser.add_argument('--train_samples', default=2000, type=int,
+parser.add_argument('--train_samples', default=2800, type=int,
                     help='Sample set size for training data')
-parser.add_argument('--test_samples', default=50, type=int,
+parser.add_argument('--test_samples', default=800, type=int,
                     help='Sample set size for testing data')
-parser.add_argument('-bs', '--batch_size', default=32, type=int,
+parser.add_argument('-bs', '--batch_size', default=64, type=int,
                     help='Batch size for training')
 args = parser.parse_args()
 config = vars(args)
 print('Run config: ', config)
 trainval_data = Pets_Detection(config['data_dir'], 'trainval')
 trainval_dataset = trainval_data.load_data()
+print('Total dataset items read: ', len(trainval_dataset))
 random.shuffle(trainval_dataset)
 train_dataset = trainval_dataset[:config['train_samples']]
 test_dataset = trainval_dataset[config['train_samples']: config['train_samples'] + config['test_samples']]
