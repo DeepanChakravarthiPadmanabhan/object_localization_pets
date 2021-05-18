@@ -5,6 +5,7 @@ import tensorflow as tf
 from localize_pets.dataset.pets_detection import Pets_Detection
 from localize_pets.datagenerator.datagenerator import DataGenerator
 from localize_pets.architecture.simple_model import simple_model
+from localize_pets.architecture.dnn import dnn
 from localize_pets.utils.misc import lr_schedule, IOU, ShowTestImages
 
 print('Code base using TF version: ', tf.__version__)
@@ -30,7 +31,7 @@ test_dataset = trainval_dataset[config['train_samples']: config['train_samples']
 print('Samples in train and test dataset are %d and %d, respectively. ' % (len(train_dataset), len(test_dataset)))
 train_datagen = DataGenerator(train_dataset, config['batch_size'], True)
 test_datagen = DataGenerator(test_dataset, 1, True)
-model = simple_model()
+model = dnn()
 model.compile(
         loss={'class_out': 'categorical_crossentropy',
               'box_out': 'mse'},
