@@ -23,7 +23,7 @@ parser.add_argument('-iw', '--image_width', default=224, type=int,
                     help='Input image width')
 parser.add_argument('-ih', '--image_height', default=224, type=int,
                     help='Input image height')
-parser.add_argument('-fe', '--feature_extractor', default=True, type=bool,
+parser.add_argument('-fe', '--feature_extractor', default=False, type=bool,
                     help='Model as feature extractor')
 args = parser.parse_args()
 config = vars(args)
@@ -37,7 +37,7 @@ test_dataset = trainval_dataset[config['train_samples']: config['train_samples']
 print('Samples in train and test dataset are %d and %d, respectively. ' % (len(train_dataset), len(test_dataset)))
 train_datagen = DataGenerator(train_dataset, config['batch_size'], config['image_width'], config['image_height'], True)
 test_datagen = DataGenerator(test_dataset, 1, config['image_width'], config['image_height'], True)
-model = dnn(feature_extractor=True,
+model = dnn(feature_extractor=config['feature_extractor'],
             image_width=config['image_width'],
             image_height=config['image_height'])
 model.compile(

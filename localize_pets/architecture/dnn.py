@@ -1,7 +1,7 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense
+from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, BatchNormalization
 
-def dnn(feature_extractor=False,
+def dnn(feature_extractor=True,
         image_width=224,
         image_height=224):
     input_ = Input(shape=(image_height, image_width, 3), name='image')
@@ -14,7 +14,7 @@ def dnn(feature_extractor=False,
         x = base_model(x, training=False)
     else:
         base_model.trainable = True
-        x = base_model(x, training=False)
+        x = base_model(x)
 
     class_head = Conv2D(256, 3, activation='relu')(x)
     class_head = Flatten()(class_head)

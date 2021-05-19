@@ -51,7 +51,7 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
             np.random.shuffle(self.indexes)
 
     def _generate_X(self, list_IDs_temp):
-        x_batch = np.zeros((self.batch_size, 300, 300, 3))
+        x_batch = np.zeros((self.batch_size, self.image_height, self.image_width, 3))
         y_batch = np.zeros((self.batch_size, 2))
         bbox_batch = np.zeros((self.batch_size, 4))
         for i, ID in enumerate(list_IDs_temp):
