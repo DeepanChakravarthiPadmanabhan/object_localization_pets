@@ -3,11 +3,14 @@ import cv2
 import math
 import tensorflow as tf
 
+
 def process_bbox_image(image, bbox, image_width, image_height):
 
     width, height = image.shape[1], image.shape[0]
-    new_image = cv2.resize(image, (image_width, image_height), interpolation=cv2.INTER_NEAREST)
-    new_image = new_image / 255.
+    new_image = cv2.resize(
+        image, (image_width, image_height), interpolation=cv2.INTER_NEAREST
+    )
+    new_image = new_image / 255.0
     width_factor = image_width / width
     height_factor = image_height / height
     xmin, ymin, xmax, ymax = bbox
@@ -18,14 +21,9 @@ def process_bbox_image(image, bbox, image_width, image_height):
     new_bbox = [xmin, ymin, xmax, ymax]
     return new_image, new_bbox
 
-class DataGenerator(tf.compat.v2.keras.utils.Sequence):
 
-    def __init__(self,
-                 dataset,
-                 batch_size,
-                 image_width,
-                 image_height,
-                 shuffle=True):
+class DataGenerator(tf.compat.v2.keras.utils.Sequence):
+    def __init__(self, dataset, batch_size, image_width, image_height, shuffle=True):
         self.batch_size = batch_size
         self.dataset = dataset
         self.image_width = image_width
@@ -33,14 +31,14 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
         self.shuffle = shuffle
         self.n = 0
         self.list_IDs = np.arange((len(self.dataset)))
-        print('Total examples in the dataset: ', len(self.list_IDs))
+        print("Total examples in the dataset: ", len(self.list_IDs))
         self.on_epoch_end()
 
     def __len__(self):
         return int(math.ceil(len(self.list_IDs) / self.batch_size))
 
     def __getitem__(self, index):
-        indexes = self.indexes[index * self.batch_size: (index + 1) * self.batch_size]
+        indexes = self.indexes[index * self.batch_size : (index + 1) * self.batch_size]
         list_IDs_temp = [self.list_IDs[k] for k in indexes]
         X, Y = self._generate_X(list_IDs_temp)
         return X, Y
@@ -55,11 +53,13 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
         y_batch = np.zeros((self.batch_size, 2))
         bbox_batch = np.zeros((self.batch_size, 4))
         for i, ID in enumerate(list_IDs_temp):
-            image = cv2.imread(self.dataset[ID]['image_path'])
-            class_id = self.dataset[ID]['species']
-            bbox = self.dataset[ID]['bbox']
-            image, bbox = process_bbox_image(image, bbox, self.image_width, self.image_height)
+            image = cv2.imread(self.dataset[ID]["image_path"])
+            class_id = self.dataset[ID]["species"]
+            bbox = self.dataset[ID]["bbox"]
+            image, bbox = process_bbox_image(
+                image, bbox, self.image_width, self.image_height
+            )
             x_batch[i] = image
             bbox_batch[i] = np.array(bbox)
             y_batch[i, class_id] = 1.0
-        return {'image': x_batch}, {'class_out': y_batch, 'box_out': bbox_batch}
+        return {"image": x_batch}, {"class_out": y_batch, "box_out": bbox_batch}

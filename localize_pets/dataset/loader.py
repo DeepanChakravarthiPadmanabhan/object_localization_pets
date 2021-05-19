@@ -70,5 +70,4 @@ class Loader(object):
         if isinstance(self.class_names, list):
             return len(self.class_names)
         else:
-            raise ValueError('class names are not a list')
-
+            raise ValueError("class names are not a list")

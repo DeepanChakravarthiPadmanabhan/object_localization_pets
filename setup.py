@@ -19,7 +19,7 @@ dependencies = [
     "git-python>=1.0.3",
     "tensorflow==2.4.1",
     "xlsxwriter>=1.2.9",
-    "tensorflow-addons==0.8.1"
+    "tensorflow-addons==0.8.1",
 ]
 
 setup(
@@ -38,4 +38,3 @@ setup(
     ),
     python_requires=">=3.6,<=3.9",
 )
-
