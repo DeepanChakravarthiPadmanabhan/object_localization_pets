@@ -20,7 +20,7 @@ dependencies = [
     "tensorflow==2.4.1",
     "xlsxwriter>=1.2.9",
     "tensorflow-addons==0.8.1",
-    "black"
+    "black==21.4b0",
 ]
 
 setup(

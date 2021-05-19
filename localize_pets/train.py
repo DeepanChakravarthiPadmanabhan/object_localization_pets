@@ -34,15 +34,55 @@ parser.add_argument(
     "-ih", "--image_height", default=224, type=int, help="Input image height"
 )
 parser.add_argument(
+    "--resize",
+    default=True,
+    type=bool,
+    help="Whether to resize the image",
+)
+parser.add_argument(
+    "--architecture_type",
+    default="dnn",
+    type=str,
+    help="Architecture type. Available options: simple_model, EfficientDet",
+)
+parser.add_argument(
+    "--base_model",
+    default="EfficientNet",
+    type=str,
+    help="Architecture name. Available options: simple_model, EfficientDet",
+)
+parser.add_argument(
     "-fe",
     "--feature_extractor",
     default=False,
     type=bool,
-    help="Model as feature extractor",
+    help="DNN as feature extractor",
+)
+parser.add_argument(
+    "--normalize",
+    default="same_scale",
+    type=str,
+    help="Normalization strategy. Available options: max, same_scale. Max for simple_model and same_scale for dnn",
 )
 args = parser.parse_args()
 config = vars(args)
 print("Run config: ", config)
+if (
+    config["normalize"] == "same_scale"
+    and config["architecture_type"] == "simple_model"
+):
+    raise ValueError(
+        "Unsupported combination of normalization and architecture type. Check help options."
+    )
+
+# Transform
+transforms = dict()
+if config["resize"]:
+    transforms["resize"] = [config["image_height"], config["image_width"]]
+elif config["normalize"]:
+    transforms["normalize"] = config["normalize"]
+
+# Dataset generation
 trainval_data = Pets_Detection(config["data_dir"], "trainval")
 trainval_dataset = trainval_data.load_data()
 print("Total dataset items read: ", len(trainval_dataset))
@@ -60,21 +100,34 @@ train_datagen = DataGenerator(
     config["batch_size"],
     config["image_width"],
     config["image_height"],
+    transforms,
     True,
 )
 test_datagen = DataGenerator(
-    test_dataset, 1, config["image_width"], config["image_height"], True
+    test_dataset, 1, config["image_width"], config["image_height"], transforms, True
 )
-model = dnn(
-    feature_extractor=config["feature_extractor"],
-    image_width=config["image_width"],
-    image_height=config["image_height"],
-)
+
+# Model build
+if config["architecture_type"] == "dnn":
+    model = dnn(
+        feature_extractor=config["feature_extractor"],
+        base_model=config["base_model"],
+        image_width=config["image_width"],
+        image_height=config["image_height"],
+    )
+elif config["architecture_type"] == "simple_model":
+    model = simple_model(None, config["image_height"], config["image_width"])
+else:
+    ValueError("Unsupported architecture: %s " % config["architecture_type"])
+
+# Model compile
 model.compile(
     loss={"class_out": "categorical_crossentropy", "box_out": "mse"},
     optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
     metrics={"class_out": "accuracy", "box_out": IOU(name="iou")},
 )
+
+# Training
 model.fit(
     train_datagen,
     epochs=100,
@@ -84,4 +137,6 @@ model.fit(
         tf.keras.callbacks.LearningRateScheduler(lr_schedule),
     ],
 )
+
+# Save model
 model.save("save_checkpoint/pets_model")

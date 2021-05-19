@@ -29,8 +29,8 @@ def simple_model_v1():
     return model
 
 
-def simple_model():
-    input_ = Input(shape=(300, 300, 3), name="image")
+def simple_model(feature_extractor=None, image_width=224, image_height=224):
+    input_ = Input(shape=(image_height, image_width, 3), name="image")
     x = input_
     for i in range(0, 5):
         n_filters = 2 ** (4 + i)

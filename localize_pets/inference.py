@@ -5,7 +5,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from localize_pets.utils.misc import IOU, display, CLASS_MAPPING
+from localize_pets.utils.misc import IOU, display, CLASS_MAPPING, process_bbox_image
 from tensorflow.keras.applications.vgg16 import VGG16
 
 
@@ -40,11 +40,22 @@ def vgg_feature_visualization(image_path):
         plt.show()
 
 
-def inference_model(image_path, model_path):
+def inference_model(
+    image_path, model_path, model_name, image_width, image_height, normalize, resize
+):
     image = cv2.imread(image_path)
     image = image.astype("float32")
-    image = cv2.resize(image, (300, 300), interpolation=cv2.INTER_NEAREST) / 255.0
+
+    # Transform
+    transforms = dict()
+    if config["resize"]:
+        transforms["resize"] = [config["image_height"], config["image_width"]]
+    elif config["normalize"]:
+        transforms["normalize"] = config["normalize"]
+
+    image, bbox = process_bbox_image(image, None, transforms)
     image = image[np.newaxis]
+
     model = tf.keras.models.load_model(
         model_path, custom_objects={"IOU": IOU(name="iou")}
     )
@@ -71,11 +82,50 @@ parser.add_argument(
     type=str,
     help="Model path",
 )
+parser.add_argument(
+    "-mn",
+    "--model_name",
+    default="EfficientNet",
+    type=str,
+    help="Model name",
+)
+parser.add_argument(
+    "-iw", "--image_width", default=224, type=int, help="Input image width"
+)
+parser.add_argument(
+    "-ih", "--image_height", default=224, type=int, help="Input image height"
+)
+parser.add_argument(
+    "--resize",
+    default=True,
+    type=bool,
+    help="Whether to resize the image",
+)
+parser.add_argument(
+    "--normalize",
+    default="same_scale",
+    type=str,
+    help="Normalization strategy. Available options: max, same_scale",
+)
+parser.add_argument(
+    "-fe",
+    "--feature_extractor",
+    default=False,
+    type=bool,
+    help="Model as feature extractor",
+)
 args = parser.parse_args()
 config = vars(args)
 image_path = config["image_path"]
 model_path = config["model_path"]
+model_name = config["model_name"]
+resize = config["resize"]
+normalize = config["normalize"]
+image_height = config["image_height"]
+image_width = config["image_width"]
 assert os.path.exists(model_path), "Model path does not exist."
 assert os.path.exists(image_path), "Image path does not exist."
-inference_model(image_path, model_path)
+inference_model(
+    image_path, model_path, model_name, image_width, image_height, normalize, resize
+)
 # vgg_feature_visualization(image_path)

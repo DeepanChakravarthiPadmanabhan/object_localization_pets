@@ -2,14 +2,20 @@ import tensorflow as tf
 from tensorflow.keras.layers import Input, Conv2D, Flatten, Dense, BatchNormalization
 
 
-def dnn(feature_extractor=True, image_width=224, image_height=224):
+def get_base_model(base_model, image_width, image_height):
+    input_size = (image_height, image_width, 3)
+    if base_model == "EfficientNet":
+        return tf.keras.applications.EfficientNetB0(
+            include_top=False, weights="imagenet", input_shape=input_size
+        )
+
+
+def dnn(
+    feature_extractor=True, base_model="EfficientNet", image_width=224, image_height=224
+):
     input_ = Input(shape=(image_height, image_width, 3), name="image")
     x = input_
-    base_model = tf.keras.applications.EfficientNetB0(
-        include_top=False,
-        weights="imagenet",
-        input_shape=(image_height, image_width, 3),
-    )
+    base_model = get_base_model(base_model, image_width, image_height)
     if feature_extractor:
         base_model.trainable = False
         x = base_model(x, training=False)
