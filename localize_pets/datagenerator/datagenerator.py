@@ -3,12 +3,13 @@ import cv2
 import math
 import tensorflow as tf
 
-def process_bbox_image(image, bbox, resize):
+def process_bbox_image(image, bbox, image_width, image_height):
+
     width, height = image.shape[1], image.shape[0]
-    new_image = cv2.resize(image, (resize, resize), interpolation=cv2.INTER_NEAREST)
+    new_image = cv2.resize(image, (image_width, image_height), interpolation=cv2.INTER_NEAREST)
     new_image = new_image / 255.
-    width_factor = resize / width
-    height_factor = resize / height
+    width_factor = image_width / width
+    height_factor = image_height / height
     xmin, ymin, xmax, ymax = bbox
     xmin = xmin * width_factor
     xmax = xmax * width_factor
@@ -19,9 +20,16 @@ def process_bbox_image(image, bbox, resize):
 
 class DataGenerator(tf.compat.v2.keras.utils.Sequence):
 
-    def __init__(self, dataset, batch_size, shuffle=True):
+    def __init__(self,
+                 dataset,
+                 batch_size,
+                 image_width,
+                 image_height,
+                 shuffle=True):
         self.batch_size = batch_size
         self.dataset = dataset
+        self.image_width = image_width
+        self.image_height = image_height
         self.shuffle = shuffle
         self.n = 0
         self.list_IDs = np.arange((len(self.dataset)))
@@ -50,7 +58,7 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
             image = cv2.imread(self.dataset[ID]['image_path'])
             class_id = self.dataset[ID]['species']
             bbox = self.dataset[ID]['bbox']
-            image, bbox = process_bbox_image(image, bbox, 300)
+            image, bbox = process_bbox_image(image, bbox, self.image_width, self.image_height)
             x_batch[i] = image
             bbox_batch[i] = np.array(bbox)
             y_batch[i, class_id] = 1.0
