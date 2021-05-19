@@ -10,7 +10,7 @@ def process_bbox_image(image, bbox, image_width, image_height):
     new_image = cv2.resize(
         image, (image_width, image_height), interpolation=cv2.INTER_NEAREST
     )
-    new_image = new_image / 255.0
+    new_image = new_image
     width_factor = image_width / width
     height_factor = image_height / height
     xmin, ymin, xmax, ymax = bbox
