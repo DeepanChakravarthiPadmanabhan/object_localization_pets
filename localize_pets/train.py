@@ -40,40 +40,27 @@ parser.add_argument(
     help="Whether to resize the image",
 )
 parser.add_argument(
-    "--architecture",
-    default="SimpleNet",
+    "--backbone",
+    default="VGG19",
     type=str,
-    help="Architecture type. Available options: SimpleNet, EfficientNet, VGG19",
-)
-parser.add_argument(
-    "--base_model",
-    default="EfficientNet",
-    type=str,
-    help="Architecture name. Available options: simple_model, EfficientDet",
+    help="Architecture name. Available options: SimpleNet, EfficientDet, VGG19",
 )
 parser.add_argument(
     "-fe",
-    "--feature_extractor",
+    "--feature_extraction",
     default=False,
     type=bool,
-    help="DNN as feature extractor",
+    help="Train backbone or use as feature extractor",
 )
 parser.add_argument(
     "--normalize",
-    default="same_scale",
+    default="max",
     type=str,
-    help="Normalization strategy. Available options: max, same_scale. Max for simple_model and same_scale for dnn",
+    help="Normalization strategy. Available options: max, same_scale. Max for SimpleNet, VGG19 and same_scale for EfficientNet",
 )
 args = parser.parse_args()
 config = vars(args)
 print("Run config: ", config)
-if (
-    config["normalize"] == "same_scale"
-    and config["architecture"] == "simple_model"
-):
-    raise ValueError(
-        "Unsupported combination of normalization and architecture type. Check help options."
-    )
 
 # Transform
 transforms = dict()
@@ -108,11 +95,11 @@ test_datagen = DataGenerator(
 )
 
 # Model build
-architecturefactory = ArchitectureFactory(config['architecture'])
+architecturefactory = ArchitectureFactory(config['backbone'])
 model_class = architecturefactory.factory()
 model_class = model_class(
-    backbone=config["base_model"],
-    feature_extraction=config["feature_extractor"],
+    backbone=config["backbone"],
+    feature_extraction=config["feature_extraction"],
     image_width=config["image_width"],
     image_height=config["image_height"],
 )
