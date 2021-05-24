@@ -56,7 +56,7 @@ parser.add_argument(
     "--normalize",
     default="max",
     type=str,
-    help="Normalization strategy. Available options: max, same_scale. Max for SimpleNet, VGG19 and same_scale for EfficientNet",
+    help="Normalization strategy. Available options: max, same, vgg19. Max for SimpleNet, VGG19 and same_scale for EfficientNet",
 )
 args = parser.parse_args()
 config = vars(args)

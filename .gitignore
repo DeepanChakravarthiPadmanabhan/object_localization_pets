@@ -32,6 +32,7 @@ save_checkpoint*
 **/*.blg
 **/*.out
 **/*.gz
+*.jpg
 .idea
 **/.DS_Store
 

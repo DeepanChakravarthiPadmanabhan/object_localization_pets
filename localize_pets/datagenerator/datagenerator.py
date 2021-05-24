@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import math
 import tensorflow as tf
-from localize_pets.utils.misc import process_bbox_image
+from localize_pets.transforms.transforms import process_bbox_image
 
 
 class DataGenerator(tf.compat.v2.keras.utils.Sequence):
