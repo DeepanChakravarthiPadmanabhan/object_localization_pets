@@ -1,8 +1,7 @@
 import os
-import cv2
 import xml.etree.ElementTree as ET
 
-from localize_pets.dataset.loader import Loader
+from localize_pets.abstract.loader import Loader
 
 
 class Pets_Detection(Loader):

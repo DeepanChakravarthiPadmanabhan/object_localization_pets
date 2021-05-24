@@ -5,7 +5,8 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from localize_pets.utils.misc import IOU, display, CLASS_MAPPING, process_bbox_image
+from localize_pets.utils.misc import display, CLASS_MAPPING, process_bbox_image
+from localize_pets.loss_metric.iou import IOU
 from tensorflow.keras.applications.vgg16 import VGG16
 
 

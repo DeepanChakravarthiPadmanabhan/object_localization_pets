@@ -23,7 +23,7 @@ dooku_key
 
 test_report/
 
-save_checkpoint/
+save_checkpoint*
 
 
 **/*.aux

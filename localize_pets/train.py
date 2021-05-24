@@ -4,9 +4,9 @@ import tensorflow as tf
 
 from localize_pets.dataset.pets_detection import Pets_Detection
 from localize_pets.datagenerator.datagenerator import DataGenerator
-from localize_pets.architecture.simple_model import simple_model
-from localize_pets.architecture.dnn import dnn
-from localize_pets.utils.misc import lr_schedule, IOU, ShowTestImages
+from localize_pets.architecture.factory import ArchitectureFactory
+from localize_pets.utils.callbacks import lr_schedule, ShowTestImages
+from localize_pets.loss_metric.iou import IOU
 
 print("Code base using TF version: ", tf.__version__)
 description = "Training script for object localization task on pets dataset"
@@ -40,10 +40,10 @@ parser.add_argument(
     help="Whether to resize the image",
 )
 parser.add_argument(
-    "--architecture_type",
-    default="dnn",
+    "--architecture",
+    default="SimpleNet",
     type=str,
-    help="Architecture type. Available options: simple_model, EfficientDet",
+    help="Architecture type. Available options: SimpleNet, EfficientNet, VGG19",
 )
 parser.add_argument(
     "--base_model",
@@ -69,7 +69,7 @@ config = vars(args)
 print("Run config: ", config)
 if (
     config["normalize"] == "same_scale"
-    and config["architecture_type"] == "simple_model"
+    and config["architecture"] == "simple_model"
 ):
     raise ValueError(
         "Unsupported combination of normalization and architecture type. Check help options."
@@ -108,17 +108,16 @@ test_datagen = DataGenerator(
 )
 
 # Model build
-if config["architecture_type"] == "dnn":
-    model = dnn(
-        feature_extractor=config["feature_extractor"],
-        base_model=config["base_model"],
-        image_width=config["image_width"],
-        image_height=config["image_height"],
-    )
-elif config["architecture_type"] == "simple_model":
-    model = simple_model(None, config["image_height"], config["image_width"])
-else:
-    ValueError("Unsupported architecture: %s " % config["architecture_type"])
+architecturefactory = ArchitectureFactory(config['architecture'])
+model_class = architecturefactory.factory()
+model_class = model_class(
+    backbone=config["base_model"],
+    feature_extraction=config["feature_extractor"],
+    image_width=config["image_width"],
+    image_height=config["image_height"],
+)
+model = model_class.model()
+
 
 # Model compile
 model.compile(
