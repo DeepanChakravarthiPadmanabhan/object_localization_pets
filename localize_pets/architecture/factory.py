@@ -11,7 +11,7 @@ class ArchitectureFactory():
     def factory(self):
         if self.name == 'EfficientNet':
             return EfficientNet
-        elif self.name == 'VGG':
+        elif self.name == 'VGG19':
             return VGG19
         elif self.name == 'SimpleNet':
             return SimpleNet
