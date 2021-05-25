@@ -28,7 +28,8 @@ class Loader(object):
         """Abstract method for loading dataset.
 
         # Returns
-            dictionary containing absolute image paths as keys and ground truth vectors as values.
+            dictionary containing absolute image
+            paths as keys and ground truth vectors as values.
         """
         raise NotImplementedError()
 

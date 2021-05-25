@@ -60,6 +60,7 @@ def test(model, test_datagen, epoch):
     fig.savefig(str(epoch) + ".jpg")
     plt.show()
 
+
 class ShowTestImages(tf.keras.callbacks.Callback):
     def __init__(self, test_datagen):
         self.test_datagen = test_datagen

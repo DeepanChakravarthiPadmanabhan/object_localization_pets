@@ -4,14 +4,27 @@ from localize_pets.abstract.architecture import Architecture
 
 
 class VGG19(Architecture):
-    def __init__(self, backbone, feature_extraction, image_width, image_height):
-        super(VGG19, self).__init__(backbone, feature_extraction, image_width, image_height)
+    def __init__(self,
+                 backbone,
+                 feature_extraction,
+                 image_width,
+                 image_height):
+        super(VGG19, self).__init__(backbone,
+                                    feature_extraction,
+                                    image_width,
+                                    image_height
+                                    )
 
     def model(self):
-        input_ = Input(shape=(self.image_height, self.image_width, 3), name="image")
+        input_ = Input(shape=(self.image_height,
+                              self.image_width,
+                              3),
+                       name="image")
         x = input_
         base_model = tf.keras.applications.VGG19(
-            include_top=False, weights="imagenet", input_shape=(self.image_height, self.image_width, 3)
+            include_top=False,
+            weights="imagenet",
+            input_shape=(self.image_height, self.image_width, 3),
         )
         if self.feature_extraction:
             base_model.trainable = False

@@ -6,7 +6,8 @@ from localize_pets.abstract.loader import Loader
 
 class Pets_Detection(Loader):
     """Data manager for Pets dataset.
-    Aids in loading RGB images, segmentation masks and detection bounding box information.
+     Aids in loading RGB images, segmentation
+     masks and detection bounding box information.
     # Arguments
         image_path:
         annotations_path:
@@ -22,7 +23,8 @@ class Pets_Detection(Loader):
         self.annotations_dir = os.path.join(self.data_dir, "annotations")
         self.xmls_dir = os.path.join(self.annotations_dir, "xmls")
         self.masks_dir = os.path.join(self.annotations_dir, "trimaps")
-        self.trainval_examples = os.path.join(self.annotations_dir, "trainval.txt")
+        self.trainval_examples = os.path.join(self.annotations_dir,
+                                              "trainval.txt")
         self.test_examples = os.path.join(self.annotations_dir, "test.txt")
         if class_names == "all":
             self.class_names = 1
@@ -57,12 +59,14 @@ class Pets_Detection(Loader):
                 xml_name = image_name + ".xml"
                 mask_name = image_name + ".png"
                 image_name += ".jpg"
-                label_id = int(label) - 1
                 species = int(species) - 1
                 if (
-                    os.path.exists(os.path.join(self.xmls_dir, xml_name))
-                    and os.path.exists(os.path.join(self.images_dir, image_name))
-                    and os.path.exists(os.path.join(self.masks_dir, mask_name))
+                    os.path.exists(os.path.join(self.xmls_dir,
+                                                xml_name))
+                    and os.path.exists(os.path.join(self.images_dir,
+                                                    image_name))
+                    and os.path.exists(os.path.join(self.masks_dir,
+                                                    mask_name))
                 ):
                     xml_path = os.path.join(self.xmls_dir, xml_name)
                     image_path = os.path.join(self.images_dir, image_name)
@@ -91,7 +95,6 @@ class Pets_Detection(Loader):
                 image_name, label, species, _ = line.strip().split(" ")
                 mask_name = image_name + ".png"
                 image_name += ".jpg"
-                label_id = int(label) - 1
                 species = int(species) - 1
                 if os.path.exists(
                     os.path.join(self.images_dir, image_name)

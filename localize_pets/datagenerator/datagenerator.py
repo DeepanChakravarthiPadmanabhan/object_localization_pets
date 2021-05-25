@@ -6,9 +6,13 @@ from localize_pets.transforms.transforms import process_bbox_image
 
 
 class DataGenerator(tf.compat.v2.keras.utils.Sequence):
-    def __init__(
-        self, dataset, batch_size, image_width, image_height, transforms, shuffle=True
-    ):
+    def __init__(self,
+                 dataset,
+                 batch_size,
+                 image_width,
+                 image_height,
+                 transforms,
+                 shuffle=True):
         self.batch_size = batch_size
         self.dataset = dataset
         self.image_width = image_width
@@ -24,7 +28,8 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
         return int(math.ceil(len(self.list_IDs) / self.batch_size))
 
     def __getitem__(self, index):
-        indexes = self.indexes[index * self.batch_size : (index + 1) * self.batch_size]
+        indexes = self.indexes[index * self.batch_size:
+                               (index + 1) * self.batch_size]
         list_IDs_temp = [self.list_IDs[k] for k in indexes]
         X, Y = self._generate_X(list_IDs_temp)
         return X, Y
@@ -35,7 +40,10 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
             np.random.shuffle(self.indexes)
 
     def _generate_X(self, list_IDs_temp):
-        x_batch = np.zeros((self.batch_size, self.image_height, self.image_width, 3))
+        x_batch = np.zeros((self.batch_size,
+                            self.image_height,
+                            self.image_width,
+                            ))
         y_batch = np.zeros((self.batch_size, 2))
         bbox_batch = np.zeros((self.batch_size, 4))
         for i, ID in enumerate(list_IDs_temp):
@@ -46,4 +54,6 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
             x_batch[i] = image
             bbox_batch[i] = np.array(bbox)
             y_batch[i, class_id] = 1.0
-        return {"image": x_batch}, {"class_out": y_batch, "box_out": bbox_batch}
+        return {"image": x_batch}, \
+               {"class_out": y_batch,
+                "box_out": bbox_batch}

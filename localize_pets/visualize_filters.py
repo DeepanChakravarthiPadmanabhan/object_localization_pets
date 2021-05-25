@@ -7,9 +7,12 @@ from localize_pets.loss_metric.iou import IOU
 
 
 def compute_loss(img, filter_index):
-    # We avoid border artifacts by only involving non-border pixels in the loss.
+    # We avoid border artifacts by only
+    # involving non-border pixels in the loss.
     activation = feature_extractor(img)
-    filter_activation = activation[:, :, :, filter_index] # Included the entire map to avoid 0 loss at center pixel
+    filter_activation = activation[
+        :, :, :, filter_index
+    ]  # Included the entire map to avoid 0 loss at center pixel
     loss = tf.reduce_mean(filter_activation)
     return loss
 
@@ -63,7 +66,8 @@ parser.add_argument(
     help="Model path",
 )
 parser.add_argument(
-    "-l", "--layer_name", default="conv2d_1", type=str, help="Layer to visualize"
+    "-l", "--layer_name", default="conv2d_1", type=str,
+    help="Layer to visualize"
 )
 parser.add_argument(
     "-f",
@@ -102,12 +106,16 @@ num_iterations = config["num_iterations"]
 image_width = config["image_width"]
 image_height = config["image_height"]
 assert os.path.exists(model_path), "Model path does not exist."
-model = tf.keras.models.load_model(model_path, custom_objects={"IOU": IOU(name="iou")})
+model = tf.keras.models.load_model(model_path,
+                                   custom_objects={"IOU": IOU(name="iou")})
 print(model.summary())
 layer = model.get_layer(name=layer_name)
-feature_extractor = tf.keras.models.Model(inputs=model.inputs, outputs=layer.output)
+feature_extractor = tf.keras.models.Model(inputs=model.inputs,
+                                          outputs=layer.output)
 loss, img = visualize_filters(
     filter_idx, learning_rate, num_iterations, image_width, image_height
 )
 plt.imshow(img)
-plt.savefig("visualize_filter_" + layer_name +'_fid' + str(filter_idx) +".jpg")
+plt.savefig("visualize_filter_" +
+            layer_name + "_fid" +
+            str(filter_idx) + ".jpg")

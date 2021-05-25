@@ -15,11 +15,11 @@ def display(image, bbox, pet_class, mask=None):
     end_point = (int(bbox[2]), int(bbox[3]))
     image = cv2.rectangle(image, start_point, end_point, (255, 255, 0), 2)
     fig = plt.figure(figsize=(12, 8))
-    if mask != None:
+    if mask:
         plt.subplot(121)
     plt.imshow(image)
     plt.title(pet_class)
-    if mask != None:
+    if mask:
         plt.subplot(122)
         plt.imshow(tf.keras.preprocessing.image.array_to_img(mask))
         plt.title("Mask")
