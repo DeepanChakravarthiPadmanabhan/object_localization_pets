@@ -42,7 +42,9 @@ def initialize_image(width, height, normalize):
     elif normalize == "-+":
         a = -1
         b = 1
-        img = a + (((img - tf.reduce_min(img)) * (b - a)) / (tf.reduce_max(img) - tf.reduce_min(img)))
+        numerator = ((img - tf.reduce_min(img)) * (b - a))
+        denominator = (tf.reduce_max(img) - tf.reduce_min(img))
+        img = a + (numerator / denominator)
     else:
         raise ValueError(
             "Normalization method unsupported %s" % normalize
@@ -62,9 +64,12 @@ def deprocess_image(image):
     return image
 
 
-def visualize_filters(
-    filter_index, learning_rate, num_iterations, image_width, image_height, normalize
-):
+def visualize_filters(filter_index,
+                      learning_rate,
+                      num_iterations,
+                      image_width,
+                      image_height,
+                      normalize):
     img = initialize_image(image_height, image_width, normalize)
     for iteration in range(num_iterations):
         loss, img = gradient_ascent_step(img, filter_index, learning_rate)
@@ -138,9 +143,12 @@ print(model.summary())
 layer = model.get_layer(name=layer_name)
 feature_extractor = tf.keras.models.Model(inputs=model.inputs,
                                           outputs=layer.output)
-loss, img = visualize_filters(
-    filter_idx, learning_rate, num_iterations, image_width, image_height, normalize
-)
+loss, img = visualize_filters(filter_idx,
+                              learning_rate,
+                              num_iterations,
+                              image_width,
+                              image_height,
+                              normalize)
 plt.imshow(img)
 plt.savefig("visualize_filter_" +
             layer_name + "_fid" +
