@@ -5,7 +5,8 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from localize_pets.utils.misc import display, CLASS_MAPPING, process_bbox_image
+from localize_pets.utils.misc import display, CLASS_MAPPING
+from localize_pets.transforms.transforms import process_bbox_image
 from localize_pets.loss_metric.iou import IOU
 from tensorflow.keras.applications.vgg16 import VGG16
 
@@ -85,7 +86,7 @@ parser.add_argument(
 parser.add_argument(
     "-m",
     "--model_path",
-    default="save_checkpoint/pets_model/",
+    default="save_checkpoint_efficientnet/pets_model/",
     type=str,
     help="Model path",
 )
@@ -113,13 +114,6 @@ parser.add_argument(
     default="same_scale",
     type=str,
     help="Normalization strategy. Available options: max, same_scale",
-)
-parser.add_argument(
-    "-fe",
-    "--feature_extractor",
-    default=False,
-    type=bool,
-    help="Model as feature extractor",
 )
 args = parser.parse_args()
 config = vars(args)

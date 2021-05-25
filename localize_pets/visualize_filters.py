@@ -3,6 +3,7 @@ import os
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+
 from localize_pets.loss_metric.iou import IOU
 
 
@@ -61,7 +62,7 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-m",
     "--model_path",
-    default="save_checkpoint/pets_model/",
+    default="save_checkpoint_efficientnet/pets_model/",
     type=str,
     help="Model path",
 )
