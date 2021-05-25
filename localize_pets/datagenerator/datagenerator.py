@@ -43,6 +43,7 @@ class DataGenerator(tf.compat.v2.keras.utils.Sequence):
         x_batch = np.zeros((self.batch_size,
                             self.image_height,
                             self.image_width,
+                            3,
                             ))
         y_batch = np.zeros((self.batch_size, 2))
         bbox_batch = np.zeros((self.batch_size, 4))

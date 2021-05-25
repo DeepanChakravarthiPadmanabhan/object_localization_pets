@@ -60,7 +60,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--normalize",
-    default="max",
+    default="vgg19",
     type=str,
     help="Normalization strategy. "
          "Available options: max, same, vgg19. "
