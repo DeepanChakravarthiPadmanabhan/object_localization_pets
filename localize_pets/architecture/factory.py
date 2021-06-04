@@ -1,5 +1,6 @@
 from localize_pets.architecture.efficientnet import EfficientNet
 from localize_pets.architecture.vgg19 import VGG19
+from localize_pets.architecture.resnet import Resnet50
 from localize_pets.architecture.simplenet import SimpleNet
 
 
@@ -14,6 +15,7 @@ class ArchitectureFactory:
             return VGG19
         elif self.name == "SimpleNet":
             return SimpleNet
+        elif self.name == "Resnet50":
+            return Resnet50
         else:
-            raise ValueError("Architecture name not implemented %s"
-                             % (self.name))
+            raise ValueError("Architecture name not implemented %s" % (self.name))

@@ -5,25 +5,28 @@ import tensorflow as tf
 def process_bbox_image(image, bbox, transforms):
     new_image = image
     new_bbox = bbox
-
     if "resize" in transforms.keys():
         new_height = transforms["resize"][0]
         new_width = transforms["resize"][1]
         new_image, new_bbox = resize_image(image, bbox, new_width, new_height)
-
     if "normalize" in transforms.keys():
-        if transforms["normalize"] == "max":
-            new_image = new_image / 255.0
-        elif transforms["normalize"] == "same":
-            new_image = new_image
-        elif transforms["normalize"] == "vgg19":
-            new_image = tf.keras.applications.vgg19.preprocess_input(new_image)
-        else:
-            raise ValueError(
-                "Normalization method unsupported %s" % transforms["normalize"]
-            )
+        new_image = normalize_image(new_image, transforms["normalize"])
 
     return new_image, new_bbox
+
+
+def normalize_image(image, type):
+    if type == "max":
+        image = image / 255.0
+    elif type == "same":
+        image = image
+    elif type == "vgg19":
+        image = tf.keras.applications.vgg19.preprocess_input(image)
+    elif type == "resnet50":
+        image = tf.keras.applications.resnet50.preprocess_input(image)
+    else:
+        raise ValueError("Normalization method unsupported %s" % type)
+    return image
 
 
 def resize_image(image, bbox, new_width, new_height):

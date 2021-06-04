@@ -12,8 +12,7 @@ from tensorflow.keras.applications.vgg16 import VGG16
 
 
 def vgg_feature_visualization(image_path):
-    image = tf.keras.preprocessing.image.load_img(image_path,
-                                                  target_size=(224, 224))
+    image = tf.keras.preprocessing.image.load_img(image_path, target_size=(224, 224))
     image = tf.keras.preprocessing.image.img_to_array(image)
     image = np.expand_dims(image, axis=0)
     image = image / 255.0
@@ -43,14 +42,9 @@ def vgg_feature_visualization(image_path):
         plt.show()
 
 
-def inference_model(image_path,
-                    model_path,
-                    model_name,
-                    image_width,
-                    image_height,
-                    normalize,
-                    resize
-                    ):
+def inference_model(
+    image_path, model_path, model_name, image_width, image_height, normalize, resize
+):
     image = cv2.imread(image_path)
     image = image.astype("float32")
 
@@ -126,12 +120,7 @@ image_height = config["image_height"]
 image_width = config["image_width"]
 assert os.path.exists(model_path), "Model path does not exist."
 assert os.path.exists(image_path), "Image path does not exist."
-inference_model(image_path,
-                model_path,
-                model_name,
-                image_width,
-                image_height,
-                normalize,
-                resize
-                )
+inference_model(
+    image_path, model_path, model_name, image_width, image_height, normalize, resize
+)
 # vgg_feature_visualization(image_path)

@@ -10,3 +10,9 @@ This repository trains model to perform object localization task on Pets Dataset
 
 [4] https://medium.com/@jon.froiland/convolutional-neural-networks-part-8-3ac54c9478cc
 
+[5] https://github.com/sicara/tf-explain#available-methods
+
+[6] Cristian Vasta, Deep Learning Models with Tensorflow 2.0, Available at: https://morioh.com/p/64064daff26c, Accessed on: 03. 05. 2021.
+
+[7] Hoa Nguyen, CNN Visualization Keras TF2, GitHub, Available at: https://github.com/nguyenhoa93/cnn-visualization-keras-tf2, Accessed on: 03. 05. 2021.
+

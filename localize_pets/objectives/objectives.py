@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-class Loss():
+class Loss:
     def __init__(self):
         pass
 
@@ -32,4 +32,3 @@ class Loss():
         tv_loss = tf.image.total_variation(filter_activation)
         loss = l1_loss + l2_loss + tv_loss
         return loss
-

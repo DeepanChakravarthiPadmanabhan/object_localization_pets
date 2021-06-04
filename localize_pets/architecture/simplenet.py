@@ -11,20 +11,13 @@ from localize_pets.abstract.architecture import Architecture
 
 
 class SimpleNet(Architecture):
-    def __init__(self,
-                 backbone,
-                 feature_extraction,
-                 image_width,
-                 image_height):
+    def __init__(self, backbone, feature_extraction, image_width, image_height):
         super(SimpleNet, self).__init__(
             backbone, feature_extraction, image_width, image_height
         )
 
     def model(self):
-        input_ = Input(shape=(self.image_height,
-                              self.image_width,
-                              3),
-                       name="image")
+        input_ = Input(shape=(self.image_height, self.image_width, 3), name="image")
         x = input_
         for i in range(0, 5):
             n_filters = 2 ** (4 + i)
