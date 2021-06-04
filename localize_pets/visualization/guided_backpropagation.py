@@ -2,10 +2,8 @@ import os
 import argparse
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from tensorflow.keras import backend as K
 from localize_pets.visualization.utils import deprocess_image, save_image, to_rgb
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
@@ -79,6 +77,12 @@ parser.add_argument(
     "-l", "--layer_name", default="dense_1", type=str, help="Layer to visualize"
 )
 parser.add_argument(
+    "-iw", "--image_width", default=224, type=int, help="Input image width"
+)
+parser.add_argument(
+    "-ih", "--image_height", default=224, type=int, help="Input image height"
+)
+parser.add_argument(
     "-n",
     "--normalize",
     default="vgg19",
@@ -92,12 +96,6 @@ parser.add_argument(
     default=True,
     type=bool,
     help="Whether to resize the image",
-)
-parser.add_argument(
-    "-iw", "--image_width", default=224, type=int, help="Input image width"
-)
-parser.add_argument(
-    "-ih", "--image_height", default=224, type=int, help="Input image height"
 )
 
 args = parser.parse_args()
