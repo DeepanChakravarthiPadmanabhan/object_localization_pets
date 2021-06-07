@@ -4,16 +4,16 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from localize_pets.visualization.utils import deprocess_image, save_image, to_rgb
+from localize_pets.visualization.utils import plot_inference_and_visualization, deprocess_image, to_rgb
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
+from localize_pets.utils.misc import CLASS_MAPPING
 
 
 @tf.custom_gradient
 def guided_relu(x):
     def grad(dy):
         return tf.cast(dy > 0, "float32") * tf.cast(x > 0, "float32") * dy
-
     return tf.nn.relu(x), grad
 
 
@@ -36,7 +36,7 @@ class GuidedBackpropagation:
     def build_guided_model(self):
         gbModel = Model(
             inputs=[self.model.inputs],
-            outputs=[self.model.get_layer(self.layer_name).output],
+            outputs=[self.model.get_layer(self.layer_name).output, self.model.output],
         )
         layer_dict = [
             layer for layer in gbModel.layers[1:] if hasattr(layer, "activation")
@@ -46,15 +46,18 @@ class GuidedBackpropagation:
                 layer.activation = guided_relu
         return gbModel
 
-    def guided_backpropagation(self, images, upsample_size):
+    def guided_backpropagation(self, image, upsample_size):
         """Guided backpropagation method for visualizing input saliency."""
         with tf.GradientTape() as tape:
-            inputs = tf.cast(images, tf.float32)
+            inputs = tf.cast(image, tf.float32)
             tape.watch(inputs)
-            outputs = self.gbModel(inputs)
-        grads = tape.gradient(outputs, inputs)[0]
+            conv_outs, preds = self.gbModel(inputs)
+
+        grads = tape.gradient(conv_outs, inputs)[0]
         saliency = cv2.resize(np.asarray(grads), upsample_size)
-        return saliency
+        pet_class = CLASS_MAPPING[np.argmax(preds[0].numpy())]
+        pet_coord = preds[1].numpy()[0]
+        return saliency, pet_coord, pet_class
 
 
 description = "Inference script for object localization task on pets dataset"
@@ -62,7 +65,7 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-i",
     "--image_path",
-    default="/home/deepan/Downloads/sample/images/Abyssinian_12.jpg",
+    default="/home/deepan/Downloads/images/Abyssinian_12.jpg",
     type=str,
     help="Image path",
 )
@@ -121,7 +124,11 @@ model = tf.keras.models.load_model(model_path, custom_objects={"IOU": IOU(name="
 print(model.summary())
 
 gbp = GuidedBackpropagation(model, layer_name)
-gbp_image = gbp.guided_backpropagation(image, (image_height, image_width))
+gbp_image, pet_bbox, pet_class = gbp.guided_backpropagation(image, (image_height, image_width))
 gbp_image = deprocess_image(gbp_image)
 gbp_image = to_rgb(gbp_image)
-save_image("./gb.jpg", gbp_image)
+plot_inference_and_visualization(image=image[0],
+                                 pet_bbox=pet_bbox,
+                                 pet_class=pet_class,
+                                 saliency=gbp_image,
+                                 visualization='gbp')

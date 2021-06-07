@@ -4,9 +4,10 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from localize_pets.visualization.utils import deprocess_image, save_image, to_rgb
+from localize_pets.visualization.utils import to_rgb, plot_inference_and_visualization
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
+from localize_pets.utils.misc import CLASS_MAPPING
 
 class GradCAM:
     def __init__(self, model, layer_name=None):
@@ -46,9 +47,11 @@ class GradCAM:
             else:
                 loss = preds[0][:, visualize_idx]
 
+        pet_class = CLASS_MAPPING[np.argmax(preds[0].numpy())]
+        pet_coord = preds[1].numpy()[0]
+
         # Compute gradients with automatic differentiation
         grads = tape.gradient(loss, conv_outs)
-        print(conv_outs.shape, preds, loss)
         conv_outs = conv_outs[0]
         grads = grads[0]
         norm_grads = tf.divide(grads, tf.reduce_mean(tf.square(grads)) * tf.constant(eps))
@@ -64,7 +67,7 @@ class GradCAM:
         # Convert to 3d
         cam3 = np.expand_dims(cam, axis=2)
         cam3 = np.tile(cam3, [1, 1, 3])
-        return cam3
+        return cam3, pet_coord, pet_class
 
 def overlay_gradCAM(img, cam3):
     img = img[0]
@@ -79,7 +82,7 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-i",
     "--image_path",
-    default="/home/deepan/Downloads/sample/images/Abyssinian_12.jpg",
+    default="/home/deepan/Downloads/images/basset_hound_163.jpg",
     type=str,
     help="Image path",
 )
@@ -146,10 +149,17 @@ model = tf.keras.models.load_model(model_path, custom_objects={"IOU": IOU(name="
 print(model.summary())
 
 grad_cam = GradCAM(model, layer_name)
-cam3 = grad_cam.compute_heatmap(image=image,
+cam3, pet_bbox, pet_class = grad_cam.compute_heatmap(image=image,
                          upsample_size=(image_height, image_width),
                          visualize_idx=visualize_idx,
                          visualize_head=visualize_head)
 cam3_overlaid = overlay_gradCAM(image, cam3)
 cam3_overlaid = to_rgb(cam3_overlaid)
-save_image('./cam3.jpg', cam3_overlaid)
+from utils import save_image
+save_image('haha.jpg', cam3_overlaid)
+plot_inference_and_visualization(image=image[0],
+                                 pet_bbox=pet_bbox,
+                                 pet_class=pet_class,
+                                 saliency=cam3_overlaid,
+                                 visualization='grad_cam',
+                                 name=visualize_idx)
