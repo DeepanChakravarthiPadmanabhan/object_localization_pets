@@ -69,12 +69,12 @@ parser.add_argument(
 parser.add_argument(
     "-m",
     "--model_path",
-    default="save_checkpoint_vgg_2/pets_model/",
+    default="save_checkpoint_resnet/pets_model/",
     type=str,
     help="Model path",
 )
 parser.add_argument(
-    "-l", "--layer_name", default="dense_1", type=str, help="Layer to visualize"
+    "-l", "--layer_name", default="conv2d_1", type=str, help="Layer to visualize"
 )
 parser.add_argument(
     "-iw", "--image_width", default=224, type=int, help="Input image width"
@@ -85,10 +85,10 @@ parser.add_argument(
 parser.add_argument(
     "-n",
     "--normalize",
-    default="vgg19",
+    default="resnet50",
     type=str,
     help="Normalization strategy. "
-    "Available options: max, same, vgg19. "
+    "Available options: max, same, vgg19, resnet50. "
     "Max for SimpleNet, VGG19 and same_scale for EfficientNet",
 )
 parser.add_argument(

@@ -48,6 +48,7 @@ class GradCAM:
 
         # Compute gradients with automatic differentiation
         grads = tape.gradient(loss, conv_outs)
+        print(conv_outs.shape, preds, loss)
         conv_outs = conv_outs[0]
         grads = grads[0]
         norm_grads = tf.divide(grads, tf.reduce_mean(tf.square(grads)) * tf.constant(eps))
@@ -85,15 +86,15 @@ parser.add_argument(
 parser.add_argument(
     "-m",
     "--model_path",
-    default="save_checkpoint_vgg_2/pets_model/",
+    default="save_checkpoint_resnet/pets_model/",
     type=str,
     help="Model path",
 )
 parser.add_argument(
-    "-l", "--layer_name", default="conv2d", type=str, help="Layer to visualize"
+    "-l", "--layer_name", default="conv2d_1", type=str, help="Layer to visualize"
 )
 parser.add_argument(
-    "--visualize_head", default="classification", type=str, help="Head to visualize"
+    "--visualize_head", default="detection", type=str, help="Head to visualize"
 )
 parser.add_argument(
     "--visualize_idx", default=1, type=int, help="Index to visualize. Corresponds to the class."
@@ -107,10 +108,10 @@ parser.add_argument(
 parser.add_argument(
     "-n",
     "--normalize",
-    default="vgg19",
+    default="resnet50",
     type=str,
     help="Normalization strategy. "
-    "Available options: max, same, vgg19. "
+    "Available options: max, same, vgg19, resnet50. "
     "Max for SimpleNet, VGG19 and same_scale for EfficientNet",
 )
 parser.add_argument(
