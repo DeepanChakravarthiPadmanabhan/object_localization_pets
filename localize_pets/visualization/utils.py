@@ -27,23 +27,49 @@ def save_image(save_path_and_name, image):
     plt.imsave(save_path_and_name, image)
 
 
-def plot_inference_and_visualization(image, pet_bbox, pet_class, saliency, visualization='gbp', name='visualize_'):
+def plot_inference_and_visualization(image, pet_bbox, pet_class, saliency, visualization='gbp', name='visualize_',
+                                     additional_fig_features=None):
     start_point = (int(pet_bbox[0]), int(pet_bbox[1]))
     end_point = (int(pet_bbox[2]), int(pet_bbox[3]))
     image = cv2.rectangle(image, start_point, end_point, (255, 255, 0), 2)
-    fig = plt.figure(figsize=(12, 8))
-    plt.subplot(121)
-    plt.imshow(image)
-    plt.title(pet_class)
-    plt.subplot(122)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    ax1.imshow(image)
+    ax1.set_title(pet_class)
     if visualization == 'gbp':
-        plt.imshow(saliency)
+        ax2.imshow(saliency)
     elif visualization == 'grad_cam':
-        plt.imshow(saliency)
-    plt.title(visualization)
-    plt.show()
+        ax2.imshow(saliency)
+        min_intensity = additional_fig_features['min_intensity']
+        max_intensity = additional_fig_features['max_intensity']
+        cbar = plt.colorbar(plt.cm.ScalarMappable(cmap='jet'),
+                            orientation='vertical',
+                            fraction=0.046,
+                            pad=0.04)
+        m1 = 0  # colorbar min value
+        m4 = 1  # colorbar max value
+        m2 = min_intensity / 255
+        m3 = max_intensity / 255
+        if m3 < m4 - 0.2:
+            cbar.set_ticks([m1, m2, m3, m4])
+            cbar.set_ticklabels([0, min_intensity, max_intensity, 255])
+        else:
+            cbar.set_ticks([m1, m2, m3, m4])
+            cbar.set_ticklabels([0, min_intensity, max_intensity, ''])
+
+    ax2.set_title(visualization)
     if name == 'visualize_':
         fig_name = 'visualize_' + visualization + '.jpg'
     else:
         fig_name = 'visualize_' + visualization + '_' + str(name) + '.jpg'
     plt.savefig(fig_name)
+    plt.show()
+    plt.close()
+
+
+def get_mpl_colormap(cmap_name='jet'):
+    cmap = plt.get_cmap(cmap_name)
+    # Initialize the matplotlib color map
+    sm = plt.cm.ScalarMappable(cmap=cmap)
+    # Obtain linear color range
+    color_range = sm.to_rgba(np.linspace(0, 1, 256), bytes=True)[:, 2:: -1]
+    return color_range.reshape(256, 1, 3)

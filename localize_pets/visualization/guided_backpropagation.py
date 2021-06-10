@@ -8,6 +8,7 @@ from localize_pets.visualization.utils import plot_inference_and_visualization, 
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
 from localize_pets.utils.misc import CLASS_MAPPING
+from localize_pets.architecture.factory import ArchitectureFactory
 
 
 @tf.custom_gradient
@@ -18,9 +19,10 @@ def guided_relu(x):
 
 
 class GuidedBackpropagation:
-    def __init__(self, model, layer_name=None):
+    def __init__(self, model, layer_name=None, visualize_idx=None):
         self.model = model
         self.layer_name = layer_name
+        self.visualize_idx = visualize_idx
         if self.layer_name == None:
             self.layer_name = self.find_target_layer()
         self.gbModel = self.build_guided_model()
@@ -34,16 +36,28 @@ class GuidedBackpropagation:
         )
 
     def build_guided_model(self):
-        gbModel = Model(
-            inputs=[self.model.inputs],
-            outputs=[self.model.get_layer(self.layer_name).output, self.model.output],
-        )
-        layer_dict = [
+        if self.visualize_idx:
+            gbModel = Model(
+                inputs=[self.model.inputs],
+                outputs=[self.model.get_layer(self.layer_name).output[:, self.visualize_idx - 1], self.model.output],
+            )
+        else:
+            gbModel = Model(
+                inputs=[self.model.inputs],
+                outputs=[self.model.get_layer(self.layer_name).output, self.model.output],
+            )
+
+        base_model_layers = [act_layer for act_layer in gbModel.layers[1].layers if hasattr(act_layer, 'activation')]
+        head_layers = [
             layer for layer in gbModel.layers[1:] if hasattr(layer, "activation")
         ]
-        for layer in layer_dict:
+        all_layers = base_model_layers + head_layers
+        for layer in all_layers:
             if layer.activation == tf.keras.activations.relu:
                 layer.activation = guided_relu
+
+        if 'class' in self.layer_name:
+            gbModel.get_layer(self.layer_name).activation = None
         return gbModel
 
     def guided_backpropagation(self, image, upsample_size):
@@ -53,6 +67,7 @@ class GuidedBackpropagation:
             tape.watch(inputs)
             conv_outs, preds = self.gbModel(inputs)
 
+        print('Conv outs shape: ', conv_outs.shape)
         grads = tape.gradient(conv_outs, inputs)[0]
         saliency = cv2.resize(np.asarray(grads), upsample_size)
         pet_class = CLASS_MAPPING[np.argmax(preds[0].numpy())]
@@ -77,7 +92,10 @@ parser.add_argument(
     help="Model path",
 )
 parser.add_argument(
-    "-l", "--layer_name", default="conv2d_1", type=str, help="Layer to visualize"
+    "-l", "--layer_name", default="class_out", type=str, help="Layer to visualize"
+)
+parser.add_argument(
+    "--visualize_idx", default=None, type=int, help="Index to visualize. Corresponds to the class."
 )
 parser.add_argument(
     "-iw", "--image_width", default=224, type=int, help="Input image width"
@@ -108,7 +126,7 @@ layer_name = config["layer_name"]
 image_path = config["image_path"]
 image_height = config["image_height"]
 image_width = config["image_width"]
-
+visualize_idx = config["visualize_idx"]
 transforms = dict()
 if config["resize"]:
     transforms["resize"] = [config["image_height"], config["image_width"]]
@@ -123,7 +141,7 @@ assert os.path.exists(model_path), "Model path does not exist."
 model = tf.keras.models.load_model(model_path, custom_objects={"IOU": IOU(name="iou")})
 print(model.summary())
 
-gbp = GuidedBackpropagation(model, layer_name)
+gbp = GuidedBackpropagation(model, layer_name, visualize_idx)
 gbp_image, pet_bbox, pet_class = gbp.guided_backpropagation(image, (image_height, image_width))
 gbp_image = deprocess_image(gbp_image)
 gbp_image = to_rgb(gbp_image)

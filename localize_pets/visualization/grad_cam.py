@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from localize_pets.visualization.utils import to_rgb, plot_inference_and_visualization
+from localize_pets.visualization.utils import to_rgb, plot_inference_and_visualization, get_mpl_colormap
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
 from localize_pets.utils.misc import CLASS_MAPPING
@@ -72,9 +72,12 @@ class GradCAM:
 def overlay_gradCAM(img, cam3):
     img = img[0]
     cam3 = np.uint8(255 * cam3)
-    cam3 = cv2.applyColorMap(cam3, cv2.COLORMAP_JET)
+    min_intensity = np.amin(cam3)
+    max_intensity = np.amax(cam3)
+    color_range = get_mpl_colormap()
+    cam3 = cv2.applyColorMap(cam3, color_range)
     new_image = 0.3 * cam3 + 0.5 * img
-    return (new_image * 255 / new_image.max()).astype("uint8")
+    return (new_image * 255 / new_image.max()).astype("uint8"), min_intensity, max_intensity
 
 
 description = "Inference script for object localization task on pets dataset"
@@ -153,13 +156,14 @@ cam3, pet_bbox, pet_class = grad_cam.compute_heatmap(image=image,
                          upsample_size=(image_height, image_width),
                          visualize_idx=visualize_idx,
                          visualize_head=visualize_head)
-cam3_overlaid = overlay_gradCAM(image, cam3)
+cam3_overlaid, min_intensity, max_intensity = overlay_gradCAM(image, cam3)
 cam3_overlaid = to_rgb(cam3_overlaid)
-from utils import save_image
-save_image('haha.jpg', cam3_overlaid)
+fig_features = {'min_intensity': min_intensity,
+                'max_intensity': max_intensity}
 plot_inference_and_visualization(image=image[0],
                                  pet_bbox=pet_bbox,
                                  pet_class=pet_class,
                                  saliency=cam3_overlaid,
                                  visualization='grad_cam',
-                                 name=visualize_idx)
+                                 name=visualize_idx,
+                                 additional_fig_features=fig_features)
