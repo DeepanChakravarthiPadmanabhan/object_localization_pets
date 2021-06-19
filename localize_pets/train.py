@@ -19,19 +19,37 @@ parser.add_argument(
     help="Data directory for training",
 )
 parser.add_argument(
-    "--train_samples", default=2800, type=int, help="Sample set size for training data"
+    "--train_samples",
+    default=2800,
+    type=int,
+    help="Sample set size for training data"
 )
 parser.add_argument(
-    "--test_samples", default=800, type=int, help="Sample set size for testing data"
+    "--test_samples",
+    default=800,
+    type=int,
+    help="Sample set size for testing data"
 )
 parser.add_argument(
-    "-bs", "--batch_size", default=16, type=int, help="Batch size for training"
+    "-bs",
+    "--batch_size",
+    default=16,
+    type=int,
+    help="Batch size for training"
 )
 parser.add_argument(
-    "-iw", "--image_width", default=224, type=int, help="Input image width"
+    "-iw",
+    "--image_width",
+    default=224,
+    type=int,
+    help="Input image width"
 )
 parser.add_argument(
-    "-ih", "--image_height", default=224, type=int, help="Input image height"
+    "-ih",
+    "--image_height",
+    default=224,
+    type=int,
+    help="Input image height"
 )
 parser.add_argument(
     "--resize",

@@ -130,7 +130,7 @@ visualize_idx = config["visualize_idx"]
 transforms = dict()
 if config["resize"]:
     transforms["resize"] = [config["image_height"], config["image_width"]]
-elif config["normalize"]:
+if config["normalize"]:
     transforms["normalize"] = config["normalize"]
 
 image = cv2.imread(image_path)
