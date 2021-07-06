@@ -1,6 +1,14 @@
 # Object localization
 This repository trains model to perform object localization task on Pets Dataset and visualizes the CNN filters.
 
+# Interpretation methods available
+1. Guided Backpropagation
+2. Integrated Gradients
+3. Smooth-Guided Backpropagation
+4. Smooth-Integrated Gradients
+5. Grad-CAM
+6. Activation Maximization
+
 ### References
 [1] https://keras.io/examples/vision/visualizing_what_convnets_learn/
 
@@ -16,3 +24,4 @@ This repository trains model to perform object localization task on Pets Dataset
 
 [7] Hoa Nguyen, CNN Visualization Keras TF2, GitHub, Available at: https://github.com/nguyenhoa93/cnn-visualization-keras-tf2, Accessed on: 03. 05. 2021.
 
+[8] Available at: https://pair-code.github.io/saliency/#guided-ig

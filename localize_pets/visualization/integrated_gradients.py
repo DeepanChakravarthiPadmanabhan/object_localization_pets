@@ -164,7 +164,7 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument(
     "-i",
     "--image_path",
-    default="/home/deepan/Downloads/images/basset_hound_163.jpg",
+    default="/media/deepan/externaldrive1/datasets_project_repos/pets_data/images/basset_hound_163.jpg",
     type=str,
     help="Image path",
 )

@@ -23,15 +23,43 @@ def to_rgb(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 
-def save_image(save_path_and_name, image):
-    plt.imsave(save_path_and_name, image)
+def visualize_image_grayscale(image_3d, percentile=99):
+    image_2d = np.sum(np.abs(image_3d), axis=2)
+    vmax = np.percentile(image_2d, percentile)
+    vmin = np.min(image_2d)
+    image_gray = np.clip((image_2d - vmin) / (vmax - vmin), 0, 1)
+    return image_gray
 
 
-def plot_inference_and_visualization(image, pet_bbox, pet_class, saliency, visualization='gbp', name='visualize_',
+def visualize_image_diverging(image_3d, percentile=99):
+    image_2d = np.sum(image_3d, axis=2)
+    span = abs(np.percentile(image_2d, percentile))
+    vmin = -span
+    vmax = span
+    image_diverging = np.clip((image_2d - vmin) / (vmax - vmin), -1, 1)
+    return image_diverging
+
+
+def save_image(save_path_and_name, image, visualize_type='grayscale'):
+    if visualize_type == 'grayscale':
+        image = visualize_image_grayscale(image)
+        plt.imsave(save_path_and_name, image, cmap='gray', vmin=0, vmax=1)
+    elif visualize_type == 'diverging':
+        image = visualize_image_diverging(image)
+        plt.imsave(save_path_and_name, image, cmap='jet')
+
+
+
+def plot_inference_and_visualization(image,
+                                     pet_bbox,
+                                     pet_class,
+                                     saliency,
+                                     visualization='gbp',
+                                     name='visualize_',
                                      additional_fig_features=None):
     start_point = (int(pet_bbox[0]), int(pet_bbox[1]))
     end_point = (int(pet_bbox[2]), int(pet_bbox[3]))
-    image = cv2.rectangle(image, start_point, end_point, (255, 255, 0), 2)
+    image = cv2.rectangle(image.astype('uint8'), start_point, end_point, (255, 255, 0), 2)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
     ax1.imshow(image)
     ax1.set_title(pet_class)
