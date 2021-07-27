@@ -166,4 +166,4 @@ shap.image_plot(shap_values,
                 explain_images,
                 index_names,
                 )
-plt.savefig('image_plot.jpg')
+plt.savefig('GradientExplainer_image_plot.jpg')

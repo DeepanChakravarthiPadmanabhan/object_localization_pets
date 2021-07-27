@@ -149,4 +149,4 @@ shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_
 e = shap.DeepExplainer(model, background_images)
 shap_values = e.shap_values(explain_images)
 shap.image_plot(shap_values, -explain_images)
-plt.savefig('image_plot.jpg')
+plt.savefig('DeepExplainer_image_plot.jpg')
