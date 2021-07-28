@@ -12,6 +12,13 @@ import shap
 import matplotlib.pyplot as plt
 tf.compat.v1.disable_v2_behavior()
 
+
+# explain how the input to the 7th layer of the model explains the top two classes
+# TODO: Modify to visualize impact on the box and class outputs
+def map2layer(model, x, layer):
+    feed_dict = dict(zip([model.layers[0].input], [x.copy()]))
+    return get_session().run(model.layers[layer].input, feed_dict)
+
 CLASS_MAPPING = {0: "Cat", 1: "Dog", 2: "XMIN", 3: "YMIN", 4: "XMAX", 5: "YMAX"}
 description = "Inference script for object localization task on pets dataset"
 parser = argparse.ArgumentParser(description=description)
@@ -147,20 +154,14 @@ explain_images = np.stack(explain_images, axis=0)
 
 print(background_images.shape, explain_images.shape)
 
-# explain how the input to the 7th layer of the model explains the top two classes
-# TODO: Modify to visualize impact on the box and class outputs
-def map2layer(x, layer):
-    feed_dict = dict(zip([model.layers[0].input], [x.copy()]))
-    return get_session().run(model.layers[layer].input, feed_dict)
-
 layer = 3 # Layer out shape should be similar to input shape
 print(model.layers[layer].name)
 # shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
 e = shap.GradientExplainer(
     (model.layers[layer].input, model.layers[-1].output),
-    map2layer(explain_images, layer),
+    map2layer(model, explain_images, layer),
     local_smoothing=0)
-shap_values, indexes = e.shap_values(map2layer(explain_images, layer), ranked_outputs=6)
+shap_values, indexes = e.shap_values(map2layer(model, explain_images, layer), ranked_outputs=6)
 index_names = np.vectorize(lambda x: CLASS_MAPPING[x])(indexes)
 shap.image_plot(shap_values,
                 explain_images,

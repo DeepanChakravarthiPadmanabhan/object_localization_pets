@@ -230,7 +230,7 @@ print(model.summary())
 
 baseline = tf.zeros(shape=(1, 224, 224, 3))
 m_steps = 50
-save_path = './localize_pets/visualization/attributions.jpg'
+save_path = 'attributions.jpg'
 
 ig = IntegratedGradients(model, layer_name, visualize_idx)
 ig_attributions = ig.integrated_gradients(baseline=baseline,

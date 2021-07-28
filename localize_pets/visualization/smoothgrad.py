@@ -10,8 +10,6 @@ from localize_pets.visualization.integrated_gradients import IntegratedGradients
 from localize_pets.visualization.guided_backpropagation import GuidedBackpropagation
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
-from localize_pets.utils.misc import CLASS_MAPPING
-import matplotlib.pyplot as plt
 
 def SmoothGrad_IG(model,
                   layer_name,
@@ -33,10 +31,8 @@ def SmoothGrad_IG(model,
             baseline = tf.zeros(shape=(1, 224, 224, 3))
             m_steps = 50
             ig = IntegratedGradients(model, layer_name, visualize_idx)
-            grad = ig.integrated_gradients(baseline=baseline,
-                                                   image=image_noise,
-                                                   m_steps=m_steps,
-                                                   batch_size=4)
+            grad = ig.integrated_gradients(baseline=baseline, image=image_noise,
+                                           m_steps=m_steps, batch_size=4)
         elif method == 'Guided Backpropagation':
             gbp = GuidedBackpropagation(model, layer_name, visualize_idx)
             gbp_image, pet_bbox, pet_class = gbp.guided_backpropagation(image_noise, (image_height, image_width))
@@ -120,7 +116,7 @@ model = tf.keras.models.load_model(model_path, custom_objects={"IOU": IOU(name="
 print(model.summary())
 
 
-save_path = './localize_pets/visualization/attributions_smooth.jpg'
+save_path = 'attributions_smooth.jpg'
 
 grad = SmoothGrad_IG(model,
                      layer_name,
