@@ -155,8 +155,7 @@ explain_images = np.stack(explain_images, axis=0)
 print(background_images.shape, explain_images.shape)
 
 layer = 3 # Layer out shape should be similar to input shape
-print(model.layers[layer].name)
-# shap.explainers._deep.deep_tf.op_handlers["AddV2"] = shap.explainers._deep.deep_tf.passthrough
+print("Layer chosen to analyze the impace on output: ", model.layers[layer].name)
 e = shap.GradientExplainer(
     (model.layers[layer].input, model.layers[-1].output),
     map2layer(model, explain_images, layer),

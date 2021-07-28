@@ -2,12 +2,15 @@
 This repository trains model to perform object localization task on Pets Dataset and visualizes the CNN filters.
 
 # Interpretation methods available
-1. Guided Backpropagation
-2. Integrated Gradients
+1. Guided Backpropagation (GBP)
+2. Integrated Gradients (IG)
 3. Smooth-Guided Backpropagation
 4. Smooth-Integrated Gradients
 5. Grad-CAM
 6. Activation Maximization
+7. Local Interpretable Model-agnostic Explanations (LIME)
+8. DeepExplainer - SHapley Additive exPlanations (SHAP) + DeepLIFT
+9. GradientExplainer - SHAP + IG + SmoothGrad
 
 ### References
 [1] https://keras.io/examples/vision/visualizing_what_convnets_learn/
