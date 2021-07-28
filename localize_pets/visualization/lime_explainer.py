@@ -2,6 +2,7 @@ import os
 import argparse
 import cv2
 import numpy as np
+from PIL import Image
 import tensorflow as tf
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
@@ -21,7 +22,85 @@ class CallFunction:
                                              self.transforms)
             images_processed.append(ex_image)
         explain_images = np.stack(images_processed, axis=0)
-        return self.model(explain_images)
+        return self.model(explain_images).numpy()
+
+def plot_relevance(method, im, dataset, mask, l, det, save_path):
+    H, W, C = im.shape
+    classes = CLASS_MAPPING
+    num_classes = len(CLASS_MAPPING)
+    true_class = CLASS_MAPPING[l]
+    pred_class = CLASS_MAPPING[l]
+    result = 'TP'
+    score = str(round(det[0][1] * 100))
+    [xmin, ymin, xmax, ymax] = np.round(det[0][2:]).astype(int)
+    colorsB = np.linspace(250, 100, num=num_classes).astype(int)
+    colorsG = np.linspace(100, 250, num=num_classes).astype(int)
+    colorsR = np.linspace(0, 255, num=num_classes).astype(int)
+    # original image
+    image = im.copy()
+    cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (0, 255, 255), 2)
+    # heatmap
+    p = mask
+    p_norm = np.max(np.abs(p)) + 1e-8
+    p_image = 255 * np.ones((im.shape))
+    pB = 255.0 * p.copy() / p_norm
+    pR = 255.0 * p.copy() / p_norm
+    pB[pB > 0.0] = 0.0
+    pR[pR < 0.0] = 0.0
+
+    p_image[:, :, 0] -= pR
+    p_image[:, :, 1] -= pR
+    p_image[:, :, 2] -= pR / 4
+
+    p_image[:, :, 0] += pB / 4
+    p_image[:, :, 1] += pB
+    p_image[:, :, 2] += pB
+
+    # bar image
+    b_image = np.zeros((H, 20, C))
+    b_image[0:H // 2, ::] = np.stack((np.tile(np.linspace(0, 255, num=H // 2)[..., np.newaxis], 20),
+                                 np.tile(np.linspace(0, 255, num=H // 2)[..., np.newaxis], 20),
+                                 np.tile(np.linspace(192, 255, num=H // 2)[..., np.newaxis], 20)), axis=2)
+    b_image[H // 2:H, ::] = np.stack((np.tile(np.linspace(255, 192, num=H // 2)[..., np.newaxis], 20),
+                                 np.tile(np.linspace(255, 0, num=H // 2)[..., np.newaxis], 20),
+                                 np.tile(np.linspace(255, 0, num=H // 2)[..., np.newaxis], 20)), axis=2)
+    # overlayed image
+    g_image = 0.299 * im[:, :, 2] + 0.587 * im[:, :, 1] + 0.114 * im[:, :, 0]
+    o_image = np.tile(g_image[..., np.newaxis], 3)
+    alpha = 0.6
+    cv2.addWeighted(p_image, alpha, im, 1 - alpha, 0, o_image)
+    cv2.rectangle(o_image, (xmin, ymin), (xmax, ymax), (0, 255, 255), 2)
+
+    # draw
+    back = [200, 200, 200]
+    im1 = cv2.copyMakeBorder(image, 40, 10, 10, 10, cv2.BORDER_CONSTANT, value=back)
+    im2 = cv2.copyMakeBorder(p_image, 40, 10, 10, 10, cv2.BORDER_CONSTANT, value=back)
+    im3 = cv2.copyMakeBorder(b_image, 40, 10, 10, 90, cv2.BORDER_CONSTANT, value=back)
+    im4 = cv2.copyMakeBorder(o_image, 40, 10, 10, 10, cv2.BORDER_CONSTANT, value=back)
+    #
+    text1 = true_class + '(' + result + ', conf=' + score + '%)'
+    text2 = method + ': ' + pred_class
+    text3 = ' '
+    textP3 = "+{:1.6f}".format(p_norm)
+    textZ3 = " {:1.1f}".format(0.0)
+    textN3 = "-{:1.6f}".format(p_norm)
+    text4 = 'Overlayed'
+    #
+    fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    fontScale = 0.5
+    thickness = 1
+    textOrg = (12, 22)
+    #
+    cv2.putText(im1, text1, textOrg, fontFace, fontScale, (0, 0, 0), thickness, 0, bottomLeftOrigin=False)
+    cv2.putText(im2, text2, textOrg, fontFace, fontScale, (0, 0, 0), thickness, 0, bottomLeftOrigin=False)
+    cv2.putText(im3, text3, textOrg, fontFace, fontScale, (0, 0, 0), thickness, 0, bottomLeftOrigin=False)
+    cv2.putText(im3, textP3, (30, 0 + 40), fontFace, fontScale, (0, 0, 0), thickness, 0, bottomLeftOrigin=False)
+    cv2.putText(im3, textZ3, (30, H // 2 + 40), fontFace, fontScale, (0, 0, 0), thickness, 0, bottomLeftOrigin=False)
+    cv2.putText(im3, textN3, (30, H + 40), fontFace, fontScale, (0, 0, 0), thickness, 0, bottomLeftOrigin=False)
+    cv2.putText(im4, text4, textOrg, fontFace, fontScale, (0, 0, 0), thickness, 0, bottomLeftOrigin=False)
+    #
+    finalIm = cv2.hconcat((im1, im2, im3, im4))
+    cv2.imwrite(save_path, finalIm)
 
 CLASS_MAPPING = {0: "Cat", 1: "Dog", 2: "XMIN", 3: "YMIN", 4: "XMAX", 5: "YMAX"}
 description = "Inference script for object localization task on pets dataset"
@@ -95,13 +174,12 @@ image_width = config["image_width"]
 visualize_head = config["visualize_head"]
 visualize_idx = config["visualize_idx"]
 
-transforms = dict()
+transform_resize = dict()
+transform_normalize = dict()
 if config["resize"]:
-    transforms["resize"] = [config["image_height"], config["image_width"]]
+    transform_resize["resize"] = [config["image_height"], config["image_width"]]
 if config["normalize"]:
-    transforms["normalize"] = config["normalize"]
-
-raw_image = cv2.imread(image_path)
+    transform_normalize["normalize"] = config["normalize"]
 
 assert os.path.exists(model_path), "Model path does not exist."
 model = tf.keras.models.load_model(model_path, custom_objects={"IOU": IOU(name="iou")})
@@ -111,21 +189,30 @@ concatenated = tf.concat(outs, axis=1)
 model = tf.keras.Model(inputs=input_layer, outputs=concatenated)
 print(model.summary())
 
-caller = CallFunction(model, transforms)
+raw_image = cv2.imread(image_path)
+input_image, _ = process_bbox_image(raw_image, None, transform_resize)
+input_image = input_image[np.newaxis]
+det = model(input_image).numpy()
+print(det)
+
+caller = CallFunction(model, transform_normalize)
 pred_fn = caller.batch_predict
 explainer = lime_image.LimeImageExplainer(verbose=True)
-explanation = explainer.explain_instance(raw_image.astype('double'),
+explanation = explainer.explain_instance(input_image[0].astype('double'),
                                          pred_fn,
                                          labels=np.arange(0, 6),
                                          top_labels=6,
                                          hide_color=0.0,
-                                         num_samples=100,
-                                         batch_size=8)
-temp, mask = explanation.get_image_and_mask(explanation.top_labels[3],
-                                               positive_only=True,
-                                               num_features=5,
-                                               min_weight=1e-3, hide_rest=False)
-
+                                         num_samples=10,
+                                         batch_size=8,
+                                         random_seed=10)
+to_visualize = 1
+temp, mask = explanation.get_image_and_mask(explanation.top_labels[1],
+                                            positive_only=True,
+                                            num_features=5,
+                                            min_weight=1e-3, hide_rest=False)
 img_boundry1 = mark_boundaries(temp/255., mask)
 print(img_boundry1.shape, mask.shape)
-plt.imsave('lime.jpg', img_boundry1)
+save_path = 'lime.jpg'
+plt.imsave(save_path, img_boundry1)
+plot_relevance('LIME', input_image[0].astype('double'), 'MSCOCO', mask, to_visualize, det, save_path)
