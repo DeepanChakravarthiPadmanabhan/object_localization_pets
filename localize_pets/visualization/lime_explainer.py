@@ -2,7 +2,6 @@ import os
 import argparse
 import cv2
 import numpy as np
-from PIL import Image
 import tensorflow as tf
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
