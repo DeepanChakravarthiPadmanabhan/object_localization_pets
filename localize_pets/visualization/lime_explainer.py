@@ -213,5 +213,6 @@ temp, mask = explanation.get_image_and_mask(explanation.top_labels[1],
 img_boundry1 = mark_boundaries(temp/255., mask)
 print(img_boundry1.shape, mask.shape)
 save_path = 'lime.jpg'
-plt.imsave(save_path, img_boundry1)
-plot_relevance('LIME', input_image[0].astype('double'), 'MSCOCO', mask, to_visualize, det, save_path)
+plt.imsave("lime_boundary.jpg", img_boundry1)
+plot_relevance('LIME', input_image[0].astype('double'), 'MSCOCO',
+               mask, to_visualize, det, save_path)

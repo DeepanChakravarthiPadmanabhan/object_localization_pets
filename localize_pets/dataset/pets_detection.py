@@ -5,9 +5,9 @@ from localize_pets.abstract.loader import Loader
 
 
 class Pets_Detection(Loader):
-    """Data manager for Pets dataset.
-     Aids in loading RGB images, segmentation
-     masks and detection bounding box information.
+    """Data manager for Pets dataset. Aids in loading RGB images, segmentation
+    masks and detection bounding box information.
+
     # Arguments
         image_path:
         annotations_path:
@@ -23,7 +23,8 @@ class Pets_Detection(Loader):
         self.annotations_dir = os.path.join(self.data_dir, "annotations")
         self.xmls_dir = os.path.join(self.annotations_dir, "xmls")
         self.masks_dir = os.path.join(self.annotations_dir, "trimaps")
-        self.trainval_examples = os.path.join(self.annotations_dir, "trainval.txt")
+        self.trainval_examples = os.path.join(self.annotations_dir,
+                                              "trainval.txt")
         self.test_examples = os.path.join(self.annotations_dir, "test.txt")
         if class_names == "all":
             self.class_names = 1
@@ -45,7 +46,6 @@ class Pets_Detection(Loader):
                 "xmax": int(member[4][2].text),  # xmax
                 "ymax": int(member[4][3].text),  # ymax
             }
-
         return value
 
     def load_data(self):
@@ -68,20 +68,11 @@ class Pets_Detection(Loader):
                     image_path = os.path.join(self.images_dir, image_name)
                     mask_path = os.path.join(self.masks_dir, mask_name)
                     bbox_details = self.read_xml(xml_path)
-                    bbox = [
-                        bbox_details["xmin"],
-                        bbox_details["ymin"],
-                        bbox_details["xmax"],
-                        bbox_details["ymax"],
-                    ]
-                    record = {
-                        "image_path": image_path,
-                        "label": int(label),
-                        "species": int(species),
-                        "xml_path": xml_path,
-                        "mask_path": mask_path,
-                        "bbox": bbox,
-                    }
+                    bbox = [bbox_details["xmin"], bbox_details["ymin"],
+                            bbox_details["xmax"], bbox_details["ymax"]]
+                    record = {"image_path": image_path, "label": int(label),
+                              "species": int(species), "xml_path": xml_path,
+                              "mask_path": mask_path, "bbox": bbox}
                     dataset.append(record)
         else:
             image_list_file = self.test_examples
@@ -97,12 +88,7 @@ class Pets_Detection(Loader):
                 ) and os.path.exists(os.path.join(self.masks_dir, mask_name)):
                     image_path = os.path.join(self.images_dir, image_name)
                     mask_path = os.path.join(self.masks_dir, mask_name)
-                    record = {
-                        "image_path": image_path,
-                        "label": int(label),
-                        "species": int(species),
-                        "mask_path": mask_path,
-                    }
+                    record = {"image_path": image_path, "label": int(label),
+                              "species": int(species), "mask_path": mask_path}
                     dataset.append(record)
-
         return dataset

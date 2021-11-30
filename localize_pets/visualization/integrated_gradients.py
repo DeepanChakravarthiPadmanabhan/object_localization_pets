@@ -4,10 +4,11 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
-from localize_pets.visualization.utils import to_rgb, plot_inference_and_visualization, get_mpl_colormap
+from localize_pets.visualization.utils import plot_inference_and_visualization
 from localize_pets.loss_metric.iou import IOU
 from localize_pets.transforms.transforms import process_bbox_image
 from localize_pets.utils.misc import CLASS_MAPPING
+from localize_pets.visualization.utils import visualize_saliency_grayscale
 import matplotlib.pyplot as plt
 
 
@@ -37,22 +38,18 @@ class IntegratedGradients:
         if self.visualize_idx:
             igModel = Model(
                 inputs=[self.model.inputs],
-                outputs=[self.model.get_layer(self.layer_name).output[:, self.visualize_idx - 1], self.model.output],
-            )
+                outputs=[self.model.get_layer(self.layer_name).output[:, self.visualize_idx - 1],
+                         self.model.output])
         else:
             igModel = Model(
                 inputs=[self.model.inputs],
-                outputs=[self.model.get_layer(self.layer_name).output, self.model.output],
-            )
+                outputs=[self.model.get_layer(self.layer_name).output,
+                         self.model.output])
         if 'class' in self.layer_name:
             igModel.get_layer(self.layer_name).activation = None
         return igModel
 
-
-    def interpolate_images(self,
-                           baseline,
-                           image,
-                           alphas):
+    def interpolate_images(self, baseline, image, alphas):
         alphas_x = alphas[:, tf.newaxis, tf.newaxis, tf.newaxis]
         baseline_x = baseline
         input_x = image
@@ -65,7 +62,6 @@ class IntegratedGradients:
             inputs = tf.cast(image, tf.float32)
             tape.watch(inputs)
             conv_outs, preds = self.igModel(inputs)
-
         print('Conv outs shape: ', conv_outs.shape)
         grads = tape.gradient(conv_outs, inputs)
         return grads
@@ -87,11 +83,7 @@ class IntegratedGradients:
         new_interpolated_image = tf.concat(new_interpolated_image, axis=0)
         return new_interpolated_image
 
-    def integrated_gradients(self,
-                             baseline,
-                             image,
-                             m_steps,
-                             batch_size):
+    def integrated_gradients(self, baseline, image, m_steps, batch_size):
         # 1. Generate alphas.
         alphas = tf.linspace(start=0.0, stop=1.0, num=m_steps + 1)
 
@@ -105,17 +97,20 @@ class IntegratedGradients:
             alpha_batch = alphas[from_: to]
 
             # 2. Generate interpolated inputs between baseline and input.
-            interpolated_path_input_batch = self.interpolate_images(baseline=baseline,
-                                                                    image=image,
-                                                                    alphas=alpha_batch)
+            interpolated_path_input_batch = self.interpolate_images(
+                baseline=baseline, image=image, alphas=alpha_batch)
 
-
-            interpolated_path_input_batch = self.get_normalized_interpolated_images(interpolated_path_input_batch)
-            # 3. Compute gradients between model outputs and interpolated inputs.
-            gradient_batch = self.compute_gradients(image=interpolated_path_input_batch)
+            interpolated_path_input_batch = (
+                self.get_normalized_interpolated_images(
+                    interpolated_path_input_batch))
+            # 3. Compute gradients between model outputs and
+            # interpolated inputs.
+            gradient_batch = self.compute_gradients(
+                image=interpolated_path_input_batch)
 
             # Write batch indices and gradients to extend TensorArray.
-            gradient_batches = gradient_batches.scatter(tf.range(from_, to), gradient_batch)
+            gradient_batches = gradient_batches.scatter(tf.range(from_, to),
+                                                        gradient_batch)
 
         # Stack path gradients together row-wise into single tensor.
         total_gradients = gradient_batches.stack()
@@ -128,15 +123,13 @@ class IntegratedGradients:
 
         return integrated_gradients
 
-    def plot_attributions(self,
-                          image,
-                          attributions,
-                          save_path):
+    def plot_attributions(self, image, attributions, save_path):
         # Sum of the attributions across color channels for visualization.
         # The attribution mask shape is a grayscale image with height and width
         # equal to the original image.
-        attribution_mask = tf.reduce_sum(tf.math.abs(ig_attributions), axis=-1)
-        fig, axs = plt.subplots(nrows=2, ncols=2, squeeze=False, figsize=(12, 12))
+        attribution_mask = tf.reduce_sum(tf.math.abs(attributions), axis=-1)
+        fig, axs = plt.subplots(nrows=2, ncols=2, squeeze=False,
+                                figsize=(12, 12))
 
         axs[0, 0].set_title('Baseline image')
         axs[0, 0].imshow(baseline[0].numpy().astype('uint8'))
@@ -161,51 +154,29 @@ class IntegratedGradients:
 
 description = "Inference script for object localization task on pets dataset"
 parser = argparse.ArgumentParser(description=description)
-parser.add_argument(
-    "-i",
-    "--image_path",
-    default="/media/deepan/externaldrive1/datasets_project_repos/pets_data/images/basset_hound_163.jpg",
-    type=str,
-    help="Image path",
-)
-parser.add_argument(
-    "-m",
-    "--model_path",
-    default="save_checkpoint_resnet/pets_model/",
-    type=str,
-    help="Model path",
-)
-parser.add_argument(
-    "-l", "--layer_name", default="box_out", type=str, help="Layer to visualize"
-)
-parser.add_argument(
-    "--visualize_head", default="detection", type=str, help="Head to visualize"
-)
-parser.add_argument(
-    "--visualize_idx", default=1, type=int, help="Index to visualize. Corresponds to the class."
-)
-parser.add_argument(
-    "-iw", "--image_width", default=224, type=int, help="Input image width"
-)
-parser.add_argument(
-    "-ih", "--image_height", default=224, type=int, help="Input image height"
-)
-parser.add_argument(
-    "-n",
-    "--normalize",
-    default="resnet50",
-    type=str,
-    help="Normalization strategy. "
-    "Available options: max, same, vgg19, resnet50. "
-    "Max for SimpleNet, VGG19 and same_scale for EfficientNet",
-)
-parser.add_argument(
-    "--resize",
-    default=True,
-    type=bool,
-    help="Whether to resize the image",
-)
-
+parser.add_argument("-i", "--image_path",
+                    default="/media/deepan/externaldrive1/datasets_project_repos/pets_data/images/basset_hound_163.jpg",
+                    type=str, help="Image path")
+parser.add_argument("-m", "--model_path",
+                    default="save_checkpoint_resnet/pets_model/", type=str,
+                    help="Model path")
+parser.add_argument("-l", "--layer_name", default="box_out", type=str,
+                    help="Layer to visualize")
+parser.add_argument("--visualize_head", default="detection", type=str,
+                    help="Head to visualize")
+parser.add_argument("--visualize_idx", default=1, type=int,
+                    help="Index to visualize. Corresponds to the class.")
+parser.add_argument("-iw", "--image_width", default=224, type=int,
+                    help="Input image width")
+parser.add_argument("-ih", "--image_height", default=224, type=int,
+                    help="Input image height")
+parser.add_argument("-n", "--normalize", default="resnet50", type=str,
+                    help="Normalization strategy. Available options: "
+                         "max, same, vgg19, resnet50."
+                         " Max for SimpleNet, vgg19 for VGG19, "
+                         "resnet50 for ResNet50 and same for EfficientNet")
+parser.add_argument("--resize", default=True, type=bool,
+                    help="Whether to resize the image")
 args = parser.parse_args()
 config = vars(args)
 model_path = config["model_path"]
@@ -216,25 +187,44 @@ image_width = config["image_width"]
 visualize_head = config["visualize_head"]
 visualize_idx = config["visualize_idx"]
 
+raw_image = cv2.imread(image_path)
+raw_image = cv2.cvtColor(raw_image, cv2.COLOR_BGR2RGB)
+display_image = cv2.resize(raw_image,
+                           (config["image_width"], config["image_height"]),
+                           interpolation=cv2.INTER_NEAREST)
+
 transforms = dict()
 if config["resize"]:
     transforms["resize"] = [config["image_height"], config["image_width"]]
+image, _ = process_bbox_image(raw_image, None, transforms)
 
-image = cv2.imread(image_path)
-image, _ = process_bbox_image(image, None, transforms)
+transforms = dict()
+if config["normalize"]:
+    transforms["normalize"] = config["normalize"]
+model_input, _ = process_bbox_image(image, None, transforms)
+
 image = image[np.newaxis]
+model_input = model_input[np.newaxis]
 
 assert os.path.exists(model_path), "Model path does not exist."
-model = tf.keras.models.load_model(model_path, custom_objects={"IOU": IOU(name="iou")})
+model = tf.keras.models.load_model(
+    model_path, custom_objects={"IOU": IOU(name="iou")})
 print(model.summary())
+preds = model(model_input)
+pet_class = CLASS_MAPPING[np.argmax(preds[0].numpy())]
+pet_coord = preds[1].numpy()[0]
 
 baseline = tf.zeros(shape=(1, 224, 224, 3))
-m_steps = 50
+m_steps = 5
 save_path = 'attributions.jpg'
 
 ig = IntegratedGradients(model, layer_name, visualize_idx)
-ig_attributions = ig.integrated_gradients(baseline=baseline,
-                                          image=image,
-                                          m_steps=m_steps,
-                                          batch_size=4)
-ig.plot_attributions(image, ig_attributions, save_path)
+saliency = ig.integrated_gradients(
+    baseline=baseline, image=image, m_steps=m_steps, batch_size=4)
+saliency_stat = (np.min(saliency), np.max(saliency))
+saliency = visualize_saliency_grayscale(saliency)
+print(saliency.shape)
+plot_inference_and_visualization(
+    image=display_image, pet_bbox=pet_coord, pet_class=pet_class,
+    saliency=saliency, visualization='IntegratedGradients',
+    saliency_stat=saliency_stat, name=layer_name + ' ' + str(visualize_idx))

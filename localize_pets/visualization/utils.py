@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib.patches as patches
 
 
 def deprocess_image(image):
@@ -31,6 +33,30 @@ def visualize_image_grayscale(image_3d, percentile=99):
     return image_gray
 
 
+def visualize_saliency_grayscale(image_3d, percentile=99):
+    image_2d = np.sum(np.abs(image_3d), axis=-1)
+    vmax = np.percentile(image_2d, percentile)
+    vmin = np.min(image_2d)
+    image_2d = np.clip((image_2d - vmin) / (vmax - vmin), 0, 1)
+    image_2d = image_2d[0]
+    return image_2d
+
+
+def plot_saliency(saliency, ax, title='Saliency map', saliency_stat=[0, 1]):
+    im = ax.imshow(saliency, cmap='inferno')
+    divider = make_axes_locatable(ax)
+    caz = divider.append_axes("right", size="5%", pad=0.1)
+    plt.colorbar(im, caz)
+    caz.yaxis.tick_right()
+    caz.yaxis.set_ticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    caz.yaxis.set_ticklabels([
+        '0.0, min:\n' + "{:.1e}".format(saliency_stat[0]),
+        '0.2', '0.4', '0.6', '0.8',
+        '1.0, max:\n' + "{:.1e}".format(saliency_stat[1])])
+    ax.axis('off')
+    ax.set_title(title)
+
+
 def visualize_image_diverging(image_3d, percentile=99):
     image_2d = np.sum(image_3d, axis=2)
     span = abs(np.percentile(image_2d, percentile))
@@ -50,21 +76,25 @@ def save_image(save_path_and_name, image, visualize_type='grayscale'):
 
 
 
-def plot_inference_and_visualization(image,
-                                     pet_bbox,
-                                     pet_class,
-                                     saliency,
-                                     visualization='gbp',
-                                     name='visualize_',
-                                     additional_fig_features=None):
+def plot_inference_and_visualization(image, pet_bbox, pet_class, saliency,
+                                     visualization='gbp', name='visualize_',
+                                     additional_fig_features=None,
+                                     saliency_stat=None, fig_title=None):
     start_point = (int(pet_bbox[0]), int(pet_bbox[1]))
-    end_point = (int(pet_bbox[2]), int(pet_bbox[3]))
-    image = cv2.rectangle(image.astype('uint8'), start_point, end_point, (255, 255, 0), 2)
+    width_rect = int(pet_bbox[2] - pet_bbox[0])
+    height_rect = int(pet_bbox[3] - pet_bbox[1])
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    fig.subplots_adjust(left=0.125, right=0.9, bottom=0.11,
+                        top=0.88, wspace=0.2, hspace=0.2)
+    rect = patches.Rectangle(start_point, width_rect, height_rect,
+                             linewidth=1, edgecolor='r', facecolor='none')
     ax1.imshow(image)
+    ax1.add_patch(rect)
     ax1.set_title(pet_class)
-    if visualization == 'gbp':
-        ax2.imshow(saliency)
+    if visualization in ['GuidedBackpropagation', 'IntegratedGradients']:
+        plot_saliency(saliency, ax2, title=visualization,
+                      saliency_stat=saliency_stat)
     elif visualization == 'grad_cam':
         ax2.imshow(saliency)
         min_intensity = additional_fig_features['min_intensity']
@@ -84,7 +114,7 @@ def plot_inference_and_visualization(image,
             cbar.set_ticks([m1, m2, m3, m4])
             cbar.set_ticklabels([0, min_intensity, max_intensity, ''])
 
-    ax2.set_title(visualization)
+    fig.suptitle(fig_title)
     if name == 'visualize_':
         fig_name = 'visualize_' + visualization + '.jpg'
     else:

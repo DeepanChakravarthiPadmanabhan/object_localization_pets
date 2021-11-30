@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 
 
 class Architecture(ABC):
-    def __init__(self, backbone, feature_extraction, image_width, image_height):
+    def __init__(self, backbone, feature_extraction, image_width,
+                 image_height):
         self.backbone = backbone
         self.feature_extraction = feature_extraction
         self.image_width = image_width
